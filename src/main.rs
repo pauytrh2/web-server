@@ -102,25 +102,37 @@ fn handle_client(mut stream: TcpStream) {
     }
 }
 
-fn sanitize_path(request_path: &str) -> PathBuf {
-    let mut base = PathBuf::from("site");
+fn sanitize_path(request_path: &str) -> Option<PathBuf> {
+    let base = Path::new("site");
+    let mut safe_path = PathBuf::new();
+
     let clean_path = request_path.trim_start_matches('/');
 
-    let mut safe_path = PathBuf::new();
-    for component in PathBuf::from(clean_path).components() {
+    for component in Path::new(clean_path).components() {
         match component {
             Component::Normal(comp) => safe_path.push(comp),
+            Component::CurDir | Component::ParentDir => continue,
             _ => continue,
         }
     }
 
     if safe_path.as_os_str().is_empty() {
-        base.push("index.html");
-    } else {
-        base.push(safe_path);
+        safe_path.push("index.html");
     }
 
-    base
+    let full_path = base.join(safe_path);
+
+    match full_path.canonicalize() {
+        Ok(resolved) => {
+            let root = base.canonicalize().ok()?;
+            if resolved.starts_with(&root) {
+                Some(resolved)
+            } else {
+                None
+            }
+        }
+        Err(_) => None,
+    }
 }
 
 fn respond_400(stream: &mut TcpStream) -> std::io::Result<()> {
