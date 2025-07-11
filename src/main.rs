@@ -8,37 +8,18 @@ use {
         time::Duration,
     },
     threadpool::ThreadPool,
+    utils::*,
+    verify_site::*,
 };
 
+mod utils;
+mod verify_site;
+
 fn main() -> std::io::Result<()> {
-    use std::fs::{self, File};
-    use std::io::Write;
-
     let site_dir = Path::new("site");
-    if !site_dir.exists() {
-        fs::create_dir_all(site_dir)?;
-        println!("Created 'site' directory");
-    } else {
-        println!("Found 'site' directory");
-    }
-
     let index_path = site_dir.join("index.html");
-    if !index_path.exists() {
-        let mut file = File::create(&index_path)?;
-        file.write_all(
-            b"<!DOCTYPE html>
-<html>
-<head><title>Welcome</title></head>
-<body>
-<h1>Hello from HTTP Server</h1>
-<p>This is the default index.html page. You may replace it with any static site.</p>
-</body>
-</html>",
-        )?;
-        println!("Created default 'site/index.html'");
-    } else {
-        println!("Found 'site/index.html'")
-    }
+
+    handle_site(site_dir, &index_path)?;
 
     const ADDRESS: &str = "127.0.0.1";
     const PORT: &str = "4242";
@@ -170,14 +151,6 @@ fn sanitize_path(request_path: &str) -> Option<PathBuf> {
     }
 }
 
-fn respond_400(stream: &mut TcpStream) -> std::io::Result<()> {
-    stream.write_all(b"HTTP/1.1 400 Bad Request\r\n\r\n400 - Bad Request")
-}
-
-fn respond_404(stream: &mut TcpStream) -> std::io::Result<()> {
-    stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n404 - File Not Found")
-}
-
 fn guess_content_type(path: &Path) -> &'static str {
     match path.extension().and_then(|s| s.to_str()) {
         Some("html") => "text/html",
@@ -189,11 +162,4 @@ fn guess_content_type(path: &Path) -> &'static str {
         Some("svg") => "image/svg+xml",
         _ => "application/octet-stream",
     }
-}
-
-fn is_extension_allowed(path: &Path) -> bool {
-    matches!(
-        path.extension().and_then(|s| s.to_str()),
-        Some("html" | "css" | "js" | "png" | "jpg" | "jpeg" | "gif" | "svg")
-    )
 }
