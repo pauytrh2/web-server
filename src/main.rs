@@ -150,16 +150,3 @@ fn sanitize_path(request_path: &str) -> Option<PathBuf> {
         Err(_) => None,
     }
 }
-
-fn guess_content_type(path: &Path) -> &'static str {
-    match path.extension().and_then(|s| s.to_str()) {
-        Some("html") => "text/html",
-        Some("css") => "text/css",
-        Some("js") => "application/javascript",
-        Some("png") => "image/png",
-        Some("jpg") | Some("jpeg") => "image/jpeg",
-        Some("gif") => "image/gif",
-        Some("svg") => "image/svg+xml",
-        _ => "application/octet-stream",
-    }
-}
