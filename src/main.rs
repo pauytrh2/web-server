@@ -11,6 +11,35 @@ use {
 };
 
 fn main() -> std::io::Result<()> {
+    use std::fs::{self, File};
+    use std::io::Write;
+
+    let site_dir = Path::new("site");
+    if !site_dir.exists() {
+        fs::create_dir_all(site_dir)?;
+        println!("Created 'site' directory");
+    } else {
+        println!("Found 'site' directory");
+    }
+
+    let index_path = site_dir.join("index.html");
+    if !index_path.exists() {
+        let mut file = File::create(&index_path)?;
+        file.write_all(
+            b"<!DOCTYPE html>
+<html>
+<head><title>Welcome</title></head>
+<body>
+<h1>Hello from Rust HTTP Server</h1>
+<p>This is the default index.html page.</p>
+</body>
+</html>",
+        )?;
+        println!("Created default 'site/index.html'");
+    } else {
+        println!("Found 'site/index.html'")
+    }
+
     const ADDRESS: &str = "127.0.0.1";
     const PORT: &str = "4242";
     let listener = TcpListener::bind(format!("{ADDRESS}:{PORT}"))?;
@@ -72,7 +101,13 @@ fn handle_client(mut stream: TcpStream) {
         }
     }
 
-    let path = sanitize_path(path.unwrap());
+    let path = match sanitize_path(path.unwrap()) {
+        Some(p) => p,
+        None => {
+            let _ = respond_400(&mut stream);
+            return;
+        }
+    };
 
     if !is_extension_allowed(&path) {
         let _ = respond_400(&mut stream);
