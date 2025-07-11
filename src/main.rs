@@ -30,8 +30,8 @@ fn main() -> std::io::Result<()> {
 <html>
 <head><title>Welcome</title></head>
 <body>
-<h1>Hello from Rust HTTP Server</h1>
-<p>This is the default index.html page.</p>
+<h1>Hello from HTTP Server</h1>
+<p>This is the default index.html page. You may replace it with any static site.</p>
 </body>
 </html>",
         )?;
