@@ -1,9 +1,13 @@
-use std::{
-    fs::read,
-    io::{BufRead, BufReader, Read, Write},
-    net::{TcpListener, TcpStream},
-    path::{Component, Path, PathBuf},
-    time::Duration,
+use {
+    std::{
+        fs::read,
+        io::{BufRead, BufReader, Read, Write},
+        net::{TcpListener, TcpStream},
+        path::{Component, Path, PathBuf},
+        sync::Arc,
+        time::Duration,
+    },
+    threadpool::ThreadPool,
 };
 
 fn main() -> std::io::Result<()> {
@@ -12,8 +16,13 @@ fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind(format!("{ADDRESS}:{PORT}"))?;
     println!("Server running on http://{ADDRESS}:{PORT}");
 
+    let pool = ThreadPool::new(8);
+    let listener = Arc::new(listener);
+
     for stream in listener.incoming().flatten() {
-        handle_client(stream);
+        pool.execute(move || {
+            handle_client(stream);
+        });
     }
 
     Ok(())
