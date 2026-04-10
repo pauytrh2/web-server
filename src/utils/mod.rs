@@ -35,11 +35,7 @@ pub fn guess_content_type(path: &Path) -> &'static str {
 }
 
 pub fn handle_client(mut stream: TcpStream) {
-    if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
-        eprintln!("Failed to set read timeout: {e}");
-        return;
-    }
-    if let Err(e) = stream.set_write_timeout(Some(Duration::from_secs(5))) {
+   if let Err(e) = stream.set_write_timeout(Some(Duration::from_secs(5))) {
         eprintln!("Failed to set write timeout: {e}");
         return;
     }
